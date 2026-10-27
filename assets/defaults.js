@@ -1,4 +1,4 @@
-import {$,status,TIMES,COURSES,userError} from './admin-core.js?v=admin1';
+import {$,status,TIMES,COURSES,userError} from './admin-core.js?v=admin2';
 export const DEFAULTS_KEY='kma-driving-admin.capacity-defaults.v1';
 export const ORIGINAL_DEFAULTS=[[4,3,2],[3,2,2],[4,3,2],[3,2,2]];
 export function validateDefaults(value){if(!Array.isArray(value)||value.length!==4||value.some(row=>!Array.isArray(row)||row.length!==3||row.some(n=>!Number.isInteger(n)||n<0||n>99)))throw userError('저장된 기본값 형식이 올바르지 않습니다.');return value.map(row=>[...row]);}

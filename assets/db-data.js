@@ -1,4 +1,4 @@
-import {deadline,range,documentSize,fingerprint,userError} from './admin-core.js?v=admin1';
+import {deadline,range,documentSize,fingerprint,userError} from './admin-core.js?v=admin2';
 export const COLLECTIONS=['availableDates','reservations','announcements'];
 const PAGE=250;
 export async function walk(f,db,name,filters=[],orderFields=[],visit=()=>{},progress=()=>{}){
