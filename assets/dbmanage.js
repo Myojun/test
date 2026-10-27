@@ -1,6 +1,6 @@
-import {$,node,status,todayKey,validDate,bytes,deadline,explain,userError,confirmAction,tableCell} from './admin-core.js?v=admin2';
-import {firebase} from './firebase.js?v=admin2';
-import {usage,deletionPreview,sameManifest,previewTotals,assertFresh,deleteManifest} from './db-data.js?v=admin2';
+import {$,node,status,todayKey,validDate,bytes,deadline,explain,userError,confirmAction,tableCell} from './admin-core.js?v=admin3';
+import {firebase} from './firebase.js?v=admin3';
+import {usage,deletionPreview,sameManifest,previewTotals,assertFresh,deleteManifest} from './db-data.js?v=admin3';
 let preview=null,currentUsage=null,working=false,expiry=null,deleting=false;
 const params=new URLSearchParams(location.search);$('startDate').value=validDate(params.get('start'))?params.get('start'):todayKey();$('endDate').value=validDate(params.get('end'))?params.get('end'):$('startDate').value;
 function lock(value){working=value;for(const id of ['loadUsage','previewButton','startDate','endDate'])$(id).disabled=value;$('deleteButton').disabled=value||!preview?.entries.length;}
@@ -11,7 +11,7 @@ $('loadUsage').addEventListener('click',async()=>{if(working)return;lock(true);s
 $('previewForm').addEventListener('submit',async event=>{event.preventDefault();if(working||!$('previewForm').reportValidity())return;const start=$('startDate').value,end=$('endDate').value;invalidate();lock(true);status('previewStatus','삭제 대상을 조회하고 있습니다.');try{const {f,db}=await deadline(firebase());preview=await deletionPreview(f,db,start,end,count=>status('previewStatus',`삭제 대상 ${count.toLocaleString()}개 확인 중…`));renderPreview(preview);status('previewStatus',preview.entries.length?'미리보기를 확인한 뒤 삭제 버튼을 눌러 주세요.':'선택한 기간에 삭제할 데이터가 없습니다.');clearTimeout(expiry);expiry=setTimeout(()=>{preview=null;$('deleteButton').disabled=true;status('previewStatus','미리보기가 만료되었습니다. 삭제 전 다시 조회해 주세요.');},300000);}catch(error){preview=null;status('previewStatus',explain(error),'error');}finally{lock(false);}});
 $('deleteButton').addEventListener('click',async()=>{
  if(working)return;try{assertFresh(preview,$('startDate').value,$('endDate').value);}catch(error){status('deleteStatus',explain(error),'error');return;}
- const manifest=preview,total=previewTotals(manifest);lock(true);const confirmed=await confirmAction({title:'DB 데이터 영구 삭제',text:`${manifest.start} ~ ${manifest.end}\n교육 일정 ${total.dates}건 / 예약 ${total.reservations}건\n문서 데이터 약 ${bytes(total.bytes)}\n\n삭제는 되돌릴 수 없습니다. 백업과 사용자 예약 중단 여부를 확인해 주세요.`,token:`${manifest.entries.length}건 삭제`,label:'영구 삭제'});
+ const manifest=preview,total=previewTotals(manifest);lock(true);const confirmed=await confirmAction({title:'DB 데이터 영구 삭제',text:`${manifest.start} ~ ${manifest.end}\n교육 일정 ${total.dates}건 / 예약 ${total.reservations}건\n문서 데이터 약 ${bytes(total.bytes)}\n\n삭제는 되돌릴 수 없습니다. 백업과 사용자 예약 중단 여부를 확인해 주세요.`,label:'영구 삭제'});
  if(!confirmed){lock(false);return;}let started=false;
  try{assertFresh(manifest,$('startDate').value,$('endDate').value);status('deleteStatus','삭제 직전 대상 변경 여부를 다시 확인하고 있습니다.');const {f,db}=await deadline(firebase());const latest=await deletionPreview(f,db,manifest.start,manifest.end);if(!sameManifest(manifest,latest))throw userError('미리보기 이후 데이터가 변경되었습니다. 삭제 대상을 다시 조회해 주세요.');started=true;deleting=true;const count=await deleteManifest(f,db,manifest,(done,total)=>status('deleteStatus',`${done.toLocaleString()} / ${total.toLocaleString()}개 삭제 확인 완료. 처리 중에는 페이지를 닫지 마세요.`));status('deleteStatus',`${count.toLocaleString()}개 문서를 삭제했습니다. 사용량과 삭제 대상을 다시 조회해 확인하세요.`,'success');
  }catch(error){const confirmed=error.confirmedDeleted||0;status('deleteStatus',`${explain(error)}${started?` 서버 성공 응답으로 확인된 삭제: ${confirmed}개. 마지막 요청은 통신 상태에 따라 결과가 불확실할 수 있습니다. 실제 남은 문서를 다시 조회해 주세요.`:''}`,'error');}

@@ -1,5 +1,5 @@
-export {$, node, status, todayKey, validDate, displayDate, TIMES, COURSES, capacity, deadline, explain, userError, normalizePhone, phoneHash, seedState, release, slotKey, dateOfTimestamp} from './core.js?v=admin2';
-import {$,node,userError,validDate} from './core.js?v=admin2';
+export {$, node, status, todayKey, validDate, displayDate, TIMES, COURSES, capacity, deadline, explain, userError, normalizePhone, phoneHash, seedState, release, slotKey, dateOfTimestamp} from './core.js?v=admin3';
+import {$,node,userError,validDate} from './core.js?v=admin3';
 export const cancelled=r=>r.status==='취소됨'||r.status==='cancelled';
 export function sorted(records){const times=['08','10','13','15'],courses=['기능','도로기초','도봉'];const idx=(a,v)=>a.includes(v)?a.indexOf(v):a.length;return [...records].sort((a,b)=>idx(times,String(a.time||'').replace(/\D/g,'').slice(0,2))-idx(times,String(b.time||'').replace(/\D/g,'').slice(0,2))||idx(courses,a.courseType)-idx(courses,b.courseType)||String(a.name||'').localeCompare(String(b.name||''),'ko'));}
 // Preserve the supplied SMS template exactly, including the newline and punctuation.
@@ -7,10 +7,10 @@ export function messageTemplate(name,date,time,courseType){if(!validDate(date))t
 export function smsURI(item){const cleanPhone=String(item.phone||'').replace(/[^0-9]/g,'');if(!/^01[016789]\d{7,8}$/.test(cleanPhone))throw userError('휴대전화 번호를 확인해 주세요.');return `sms:${cleanPhone}?body=${encodeURIComponent(messageTemplate(item.name,item.date,item.time,item.courseType))}`;}
 export function showNote(text){$('noteText').textContent=String(text??'');$('noteDialog').showModal();}
 let confirming=false;
-export function confirmAction({title,text,token='',label='확인'}){
+export function confirmAction({title,text,label='확인'}){
  if(confirming)return Promise.resolve(false);confirming=true;const dialog=$('confirmDialog'),previous=document.activeElement;
- $('confirmTitle').textContent=title;$('confirmText').textContent=text;$('confirmationField').hidden=!token;$('confirmationInput').value='';$('confirmationHint').textContent=token?`계속하려면 “${token}”를 입력하세요.`:'';$('confirmYes').textContent=label;$('confirmYes').disabled=!!token;
- return new Promise(resolve=>{let answer=false;const input=()=>{$('confirmYes').disabled=!!token&&$('confirmationInput').value!==token;};const yes=()=>{if(!$('confirmYes').disabled){answer=true;dialog.close();}};const no=()=>dialog.close();const close=()=>{confirming=false;$('confirmationInput').removeEventListener('input',input);$('confirmYes').removeEventListener('click',yes);$('confirmNo').removeEventListener('click',no);previous?.focus();resolve(answer);};$('confirmationInput').addEventListener('input',input);$('confirmYes').addEventListener('click',yes);$('confirmNo').addEventListener('click',no);dialog.addEventListener('close',close,{once:true});dialog.showModal();});
+ $('confirmTitle').textContent=title;$('confirmText').textContent=text;$('confirmYes').textContent=label;$('confirmYes').disabled=false;
+ return new Promise(resolve=>{let answer=false;const yes=()=>{answer=true;dialog.close();};const no=()=>dialog.close();const close=()=>{confirming=false;$('confirmYes').removeEventListener('click',yes);$('confirmNo').removeEventListener('click',no);previous?.focus();resolve(answer);};$('confirmYes').addEventListener('click',yes);$('confirmNo').addEventListener('click',no);dialog.addEventListener('close',close,{once:true});dialog.showModal();});
 }
 export function range(start,end){if(!validDate(start)||!validDate(end)||start>end)throw userError('시작 날짜와 종료 날짜를 확인해 주세요.');return {start,end};}
 export function bytes(n){if(!Number.isFinite(n))return '—';if(n<1024)return `${n.toLocaleString('ko-KR')} B`;if(n<1024**2)return `${(n/1024).toFixed(1)} KiB`;return `${(n/1024**2).toFixed(2)} MiB`;}

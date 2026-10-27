@@ -1,13 +1,13 @@
-import {$,node,status,todayKey,validDate,TIMES,COURSES,sorted,cancelled,showNote,confirmAction,deadline,explain,userError,phoneHash,normalizePhone,seedState,release,slotKey,tableCell} from './admin-core.js?v=admin2';
-import {firebase,initialState,activeRecords} from './firebase.js?v=admin2';
-import {deletionPreview,previewTotals,assertFresh,sameManifest,deleteManifest} from './db-data.js?v=admin2';
-import {initDefaults} from './defaults.js?v=admin2';
+import {$,node,status,todayKey,validDate,TIMES,COURSES,sorted,cancelled,showNote,confirmAction,deadline,explain,userError,phoneHash,normalizePhone,seedState,release,slotKey,tableCell} from './admin-core.js?v=admin3';
+import {firebase,initialState,activeRecords} from './firebase.js?v=admin3';
+import {deletionPreview,previewTotals,assertFresh,sameManifest,deleteManifest} from './db-data.js?v=admin3';
+import {initDefaults} from './defaults.js?v=admin3';
 initDefaults();$('createDate').value=$('searchDate').value=todayKey();let creating=false,searching=false,cancelling=false,deleting=false,version=0;
 $('deleteScheduleButton').addEventListener('click',async()=>{
  if(deleting||creating||cancelling)return;const date=$('createDate').value;if(!validDate(date)){status('createStatus','날짜를 선택해 주세요.','error');return;}
  deleting=true;$('deleteScheduleButton').disabled=$('createButton').disabled=true;let started=false;
  try{status('createStatus','삭제할 날짜의 데이터를 확인하고 있습니다.');const {f,db}=await deadline(firebase());const manifest=await deletionPreview(f,db,date,date);if(!manifest.entries.length){status('createStatus','이 날짜에 삭제할 데이터가 없습니다.');return;}const totals=previewTotals(manifest);
- const confirmed=await confirmAction({title:'교육 삭제',text:`${date} 교육 일정 ${totals.dates}건과 예약 ${totals.reservations}건을 영구 삭제합니다. 계속하시겠습니까?`,token:`${manifest.entries.length}건 삭제`,label:'삭제하기'});
+ const confirmed=await confirmAction({title:'교육 삭제',text:`${date} 교육 일정 ${totals.dates}건과 예약 ${totals.reservations}건을 영구 삭제합니다. 계속하시겠습니까?`,label:'삭제하기'});
  if(!confirmed){status('createStatus','삭제를 취소했습니다.');return;}assertFresh(manifest,date,date);const current=await deletionPreview(f,db,date,date);if(!sameManifest(manifest,current))throw userError('예약 데이터가 변경되었습니다. 다시 확인해 주세요.');started=true;
  const count=await deleteManifest(f,db,manifest,(done,total)=>status('createStatus',`${done} / ${total}개 삭제 확인 완료`));status('createStatus',`${date} 교육과 예약 ${count}개 문서를 삭제했습니다.`,'success');version++;$('reservationRows').replaceChildren();$('resultCaption').textContent='예약 내역';status('searchStatus','삭제 후 예약 내역을 다시 조회해 주세요.');
  }catch(error){status('createStatus',explain(error)+(started?` 성공 응답으로 확인된 삭제: ${error.confirmedDeleted||0}개. 실제 남은 데이터는 다시 조회해 주세요.`:''),'error');}
