@@ -1,7 +1,7 @@
-import {$,node,status,todayKey,validDate,TIMES,COURSES,sorted,cancelled,showNote,confirmAction,deadline,explain,userError,phoneHash,normalizePhone,seedState,release,slotKey,tableCell} from './admin-core.js?v=admin3';
-import {firebase,initialState,activeRecords} from './firebase.js?v=admin3';
-import {deletionPreview,previewTotals,assertFresh,sameManifest,deleteManifest} from './db-data.js?v=admin3';
-import {initDefaults} from './defaults.js?v=admin3';
+import {$,node,status,todayKey,validDate,TIMES,COURSES,sorted,cancelled,showNote,confirmAction,deadline,explain,userError,phoneHash,normalizePhone,seedState,release,slotKey,tableCell,segmentedCell} from './admin-core.js?v=admin4';
+import {firebase,initialState,activeRecords} from './firebase.js?v=admin4';
+import {deletionPreview,previewTotals,assertFresh,sameManifest,deleteManifest} from './db-data.js?v=admin4';
+import {initDefaults} from './defaults.js?v=admin4';
 initDefaults();$('createDate').value=$('searchDate').value=todayKey();let creating=false,searching=false,cancelling=false,deleting=false,version=0;
 $('deleteScheduleButton').addEventListener('click',async()=>{
  if(deleting||creating||cancelling)return;const date=$('createDate').value;if(!validDate(date)){status('createStatus','날짜를 선택해 주세요.','error');return;}
@@ -22,7 +22,7 @@ $('createForm').addEventListener('submit',async event=>{
 async function search(){
  if(searching||cancelling)return;const date=$('searchDate').value;if(!validDate(date))return;const token=++version;searching=true;$('searchButton').disabled=true;$('reservationRows').replaceChildren();status('searchStatus','예약을 조회하고 있습니다.');
  try{const snapshot=await deadline((async()=>{const {f,db}=await firebase();return f.getDocsFromServer(f.query(f.collection(db,'reservations'),f.where('date','==',date)));})());if(token!==version)return;const records=sorted(snapshot.docs.map(d=>({...d.data(),id:d.id})));$('resultCaption').textContent=`${date} 예약 ${records.length}건`;
- for(const r of records){const row=node('tr');if(cancelled(r))row.className='cancelled';for(const v of [r.date,r.time,r.courseType,r.name,`${r.grade??'—'}학년`,`${r.unit??'—'}중대`,r.phone,r.status])tableCell(row,v);const note=tableCell(row,'');if(typeof r.note==='string'&&r.note.trim()){const b=node('button','보기');b.type='button';b.addEventListener('click',()=>showNote(r.note));note.append(b);}else note.textContent='-';const action=tableCell(row,'');if(r.status==='예약됨'){const b=node('button','예약 취소');b.type='button';b.addEventListener('click',()=>cancel(r));action.append(b);}else action.textContent=cancelled(r)?'취소됨':'—';$('reservationRows').append(row);}
+ for(const r of records){const row=node('tr');if(cancelled(r))row.className='cancelled';segmentedCell(row,r.date,'date');for(const v of [r.time,r.courseType,r.name,`${r.grade??'—'}학년`,`${r.unit??'—'}중대`])tableCell(row,v);segmentedCell(row,r.phone,'phone');const stateCell=tableCell(row,r.status);stateCell.className=r.status==='예약됨'?'status-booked':'status-other';const note=tableCell(row,'');if(typeof r.note==='string'&&r.note.trim()){const b=node('button','보기');b.type='button';b.addEventListener('click',()=>showNote(r.note));note.append(b);}else note.textContent='-';const action=tableCell(row,'');if(r.status==='예약됨'){const b=node('button');b.append(node('span','취소','cancel-label'));b.className='row-cancel';b.type='button';b.setAttribute('aria-label',`${r.name||'예약자'} 예약 취소`);b.addEventListener('click',()=>cancel(r));action.append(b);}else action.textContent=cancelled(r)?'취소됨':'—';$('reservationRows').append(row);}
  status('searchStatus',records.length?`${records.length}건을 확인했습니다.`:'해당 날짜에 예약이 없습니다.');
  }catch(error){if(token===version)status('searchStatus',explain(error),'error');}finally{searching=false;$('searchButton').disabled=false;}
 }

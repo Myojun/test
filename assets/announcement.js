@@ -1,5 +1,5 @@
-import {$,status,dateOfTimestamp,deadline,explain,userError,confirmAction,fingerprint} from './admin-core.js?v=admin3';
-import {firebase} from './firebase.js?v=admin3';
+import {$,status,dateOfTimestamp,deadline,explain,userError,confirmAction,fingerprint} from './admin-core.js?v=admin4';
+import {firebase} from './firebase.js?v=admin4';
 let busy=false,current=null;
 function lock(value){busy=value;for(const id of ['saveNotice','deleteNotice','reloadNotice'])$(id).disabled=value;}
 async function load(){if(busy)return;lock(true);status('noticeStatus','공지사항을 확인하고 있습니다.');try{const snapshot=await deadline((async()=>{const {f,db}=await firebase();return f.getDocFromServer(f.doc(db,'announcements','main'));})());current=snapshot.exists()?{data:snapshot.data(),hash:await fingerprint(snapshot.data())}:null;$('noticeContent').textContent=current?(typeof current.data.content==='string'?current.data.content:'내용이 없습니다.'):'등록된 공지사항이 없습니다.';const date=dateOfTimestamp(current?.data.createdAt);$('noticeDate').hidden=!date;if(date){$('noticeDate').dateTime=date.toISOString();$('noticeDate').textContent='작성일 '+new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',dateStyle:'medium'}).format(date);}status('noticeStatus','현재 공지사항을 확인했습니다.');}catch(error){status('noticeStatus',explain(error),'error');}finally{lock(false);}}

@@ -1,10 +1,10 @@
-import {$,node,status,todayKey,validDate,sorted,cancelled,smsURI,deadline,explain,tableCell} from './admin-core.js?v=admin3';
-import {firebase} from './firebase.js?v=admin3';
+import {$,node,status,todayKey,validDate,sorted,cancelled,smsURI,deadline,explain,tableCell,segmentedCell} from './admin-core.js?v=admin4';
+import {firebase} from './firebase.js?v=admin4';
 let records=[],version=0,busy=false;
 $('dateInput').value=todayKey();
 function render(){
  const data=sorted(records.filter(r=>cancelled(r)?$('filterCancelled').checked:$('filterBooked').checked));const body=$('messageRows');body.replaceChildren();$('messageCount').textContent=`${data.length}명`;
- for(const item of data){const row=node('tr');if(cancelled(item))row.className='cancelled';for(const v of [item.name,item.phone,item.courseType,item.time,item.status])tableCell(row,v);const cell=tableCell(row,'');try{const a=node('a','문자 발송','button');a.href=smsURI(item);a.setAttribute('aria-label',`${item.name||'예약자'} 문자 발송`);cell.append(a);}catch{cell.append(node('span','번호·날짜 확인 필요','small'));}body.append(row);}
+ for(const item of data){const row=node('tr');if(cancelled(item))row.className='cancelled';tableCell(row,item.name);segmentedCell(row,item.phone,'phone');for(const v of [item.courseType,item.time])tableCell(row,v);const stateCell=tableCell(row,item.status);stateCell.className=cancelled(item)?'status-other':'status-booked';const cell=tableCell(row,'');try{const a=node('a','문자 발송','button');a.href=smsURI(item);a.setAttribute('aria-label',`${item.name||'예약자'} 문자 발송`);cell.append(a);}catch{cell.append(node('span','번호·날짜 확인 필요','small'));}body.append(row);}
  if(!data.length){const row=node('tr'),td=tableCell(row,records.length?'선택한 상태의 예약이 없습니다.':'조회된 예약이 없습니다.');td.colSpan=6;body.append(row);}
 }
 $('filterAll').addEventListener('change',()=>{$('filterBooked').checked=$('filterCancelled').checked=$('filterAll').checked;render();});
